@@ -1,89 +1,75 @@
-// import {observable,action} from 'mobx';
-// import React,{Component} from 'react';
-// import ReactDom from 'react-dom';
-// import PropTypes from 'prop-types';
-// import { observer, PropTypes as ObservablePropTypes} from 'mobx-react'
-//
-//
-// class  Store  {
-//    @observable cache = {
-//         queue:[]
-//    }
-//    @action.bound refresh(){
-//        this.cache.queue.push(1);
-//    }
-// }
-//
-// const store = new Store();
-//
-// @observer
-// class Bar extends Component{
-//     static propTypes = {
-//         queue: ObservablePropTypes.observableArray
-//     };
-//      render(){
-//          const queue = this.props.queue;
-//
-//          return <span>{queue.length}</span>
-//      }
-//
-// }
-//
-// class Foo  extends Component{
-//     static propTypes = {
-//         cache:ObservablePropTypes.observableObject
-//     };
-//
-//     render(){
-//         console.log('hshhs');
-//
-//         const cache = this.props.cache;
-//         return <div><button onClick={this.props.refresh}>refresh</button><Bar queue={cache.queue}>hhh</Bar></div>
-//     }
-// }
-//
-//
-// ReactDom.render(<Foo cache={store.cache} refresh={store.refresh}/>,document.querySelector('#root'));
-//
-//
-//
-//
+function createStore() {
+    let state;
+    let listeners = [];
+    const getState = () => state;
+    //subscribe 每次调用，都会返回一个取消订阅的方法
+    const subscribe = (ln) => {
+        listeners.push(ln);
+        //订阅之后，也要允许取消订阅。
+        //难道我订了某本杂志之后，就不允许我退订吗？可怕~
+        const unsubscribe = () => {
+            listeners = listeners.filter(listener => ln !== listener);
+        }
+        return unsubscribe;
+    };
+    const dispatch = (action) => {
+        //reducer(state, action) 返回一个新状态
+        state = reducer(state, action);
+        listeners.forEach(ln => ln());
 
+    }
+    //你要是有个 action 的 type 的值正好和 `@@redux/__INIT__${Math.random()}` 相等，我敬你是个狠人
+    dispatch({ type: `@@redux/__INIT__${Math.random()}` });
 
-
-import { observable, observer } from './mobx/index.js';
-import React, { Component, Fragment } from 'react';
-import ReactDom from 'react-dom';
-
-
-class Store {
-    @observable str = "";
-    @observable obj = {
-        name: "123"
+    return {
+        getState,
+        dispatch,
+        subscribe
     }
 }
+const initialState = {
+    color: 'blue'
+}
 
-var store = new Store();
-
-
-@observer
-class TodoList extends Component {
-
-    onClick = () => {
-        this.props.store.str = "123"
-        this.props.store.obj.name = "456"
-    }
-    render() {
-        let store = this.props.store
-        return <div className="todo-list">
-            <button onClick={this.onClick}>修改</button>
-            <div>
-                show:{store.str}
-            </div>
-            <div>
-                show:{store.obj.name}
-            </div>
-        </div>
+function reducer(state = initialState, action) {
+    switch (action.type) {
+        case 'CHANGE_COLOR':
+            return {
+                ...state,
+                color: action.color
+            }
+        default:
+            return state;
     }
 }
-ReactDom.render(< TodoList store={store} />, document.querySelector('#root'));
+const store = createStore(reducer);
+
+function renderApp(state) {
+    renderHeader(state);
+    renderContent(state);
+}
+function renderHeader(state) {
+    const header = document.getElementById('header');
+    header.style.color = state.color;
+}
+function renderContent(state) {
+    const content = document.getElementById('content');
+    content.style.color = state.color;
+}
+
+document.getElementById('to-blue').onclick = function () {
+    store.dispatch({
+        type: 'CHANGE_COLOR',
+        color: 'rgb(0, 51, 254)'
+    });
+}
+document.getElementById('to-pink').onclick = function () {
+    store.dispatch({
+        type: 'CHANGE_COLOR',
+        color: 'rgb(247, 109, 132)'
+    });
+}
+
+renderApp(store.getState());
+//每次state发生改变时，都重新渲染
+store.subscribe(() => renderApp(store.getState()));
