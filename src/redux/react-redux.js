@@ -21,25 +21,28 @@ export class Provider extends React.Component {
 
 
 
-
 //connect
 
-function bindActionCreator(creator, dispatch) {
-    return (...args) => dispatch(creator(...args))
+function bindActionCreator(actionCreator, dispatch) {
+    return (...args) => dispatch(actionCreator(...args));
 }
-
-export function bindActionCreators(creators, dispatch) {
-    let bound = {}
-    Object.keys(creators).forEach(v => {
-        let creator = creators[v]
-        bound[v] = bindActionCreator(creator, dispatch)
-    })
-    return bound
+function bindActionCreators(actionCreator, dispatch) {
+    //actionCreators 可以是一个普通函数或者是一个对象
+    if (typeof actionCreator === 'function') {
+        //如果是函数，返回一个函数，调用时，dispatch 这个函数的返回值
+        bindActionCreator(actionCreator, dispatch);
+    } else if (typeof actionCreator === 'object') {
+        //如果是一个对象，那么对象的每一项都要都要返回 bindActionCreator
+        const boundActionCreators = {}
+        for (let key in actionCreator) {
+            boundActionCreators[key] = bindActionCreator(actionCreator[key], dispatch);
+        }
+        return boundActionCreators;
+    }
 }
-
 
 export const connect = (
-    mapStateToProps = state => state,
+    mapStateToProps = state => ({}),
     mapDispatchToProps = {}
 ) => (WrapComponent) => {
     return class ConnectComponent extends React.Component {
@@ -61,7 +64,7 @@ export const connect = (
         update() {
             const { store } = this.context
             // store.getState()这就是为什么mapStateToProps函数里面能拿到state 
-            const stateProps = mapStateToProps(store.getState())
+            const stateProps = mapStateToProps(store.getState(), this.props)
             // 方法不能直接给，因为需要dispatch
             /**
               function addGun() {
@@ -73,6 +76,8 @@ export const connect = (
              */
             const dispatchProps = bindActionCreators(mapDispatchToProps, store.dispatch)
             // 注意state的顺序问题会覆盖
+
+            //这里应该对比一下 props 是否发生变化
             this.setState({
                 props: {
                     ...this.state.props,
