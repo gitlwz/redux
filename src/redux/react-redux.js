@@ -58,7 +58,7 @@ export const connect = (
         // 2 实现了mapStateToProps
         componentDidMount() {
             const { store } = this.context
-            store.subscribe(() => this.update())
+            this.unsub = store.subscribe(() => this.update())
             this.update()
         }
         update() {
@@ -85,6 +85,10 @@ export const connect = (
                     ...dispatchProps,
                 }
             })
+        }
+        componentWillUnmount() {
+            //取消订阅
+            this.unsub();
         }
         // 1
         render() {
