@@ -2,10 +2,13 @@ import React, { Component, Fragment } from 'react';
 import ReactDom from 'react-dom';
 import { createStore, applyMiddleware } from "./redux/index"
 import { Provider, connect } from "./redux/react-redux"
-import {logger} from "./redux/logger"
+import { logger } from "./redux/logger"
+import reduxThunk from "./redux/redux-thunk"
 import reducer from "./reducers.js"
-import { add, del } from "./action";
-let createStoreWithMiddleware = applyMiddleware(logger)(createStore)
+import { add, del, asyAdd } from "./action";
+
+
+let createStoreWithMiddleware = applyMiddleware(reduxThunk, logger)(createStore)
 let store = createStoreWithMiddleware(reducer)
 
 class _Show extends Component {
@@ -30,11 +33,15 @@ class _App extends Component {
     onDel = () => {
         this.props.del(1)
     }
+    onasyAdd = () => {
+        this.props.asyAdd(1)
+    }
     render() {
 
         return <div className="todo-list">
             <button onClick={this.onADD}>ADD</button>
             <button onClick={this.onDel}>Del</button>
+            <button onClick={this.onasyAdd}>asyAdd</button>
             <div>
                 <Show />
             </div>
@@ -45,7 +52,8 @@ let App = connect((store) => {
     return {}
 }, {
         add: add,
-        del: del
+        del: del,
+        asyAdd
     })(_App)
 
 ReactDom.render(<Provider store={store}>

@@ -13,3 +13,11 @@ export function del(number) {
         number
     }
 }
+
+export function asyAdd(number) {
+    return (dispatch) => {
+        setTimeout(() => {
+            dispatch(add(number))
+        }, 1000)
+    }
+}
