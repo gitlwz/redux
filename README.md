@@ -1,2 +1,2 @@
-# mobx-react
-mobx-react
+# reudx-react
+reudx-react
